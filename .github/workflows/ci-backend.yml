@@ -1,8 +1,8 @@
-name: Backend CI + Deploy coverage to Pages
+name: Deploy backend coverage to Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -10,13 +10,17 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build:
-    name: Build & Package Coverage
+  deploy:
+    name: Build, Package & Deploy
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./back
 
     steps:
       - name: Checkout code
@@ -30,16 +34,15 @@ jobs:
           cache: maven
 
       - name: Run tests & generate Jacoco report
-        run: mvn clean verify jacoco:report
+        run: mvn -f back/pom.xml clean verify jacoco:report
 
-      - name: Prepare coverage directory at repo root
-        working-directory: ${{ github.workspace }}
+      - name: Prepare coverage-backend directory
         run: |
           rm -rf coverage-backend
           mkdir coverage-backend
           cp -R back/target/site/jacoco/* coverage-backend/
 
-      - name: Configure Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
@@ -47,13 +50,6 @@ jobs:
         with:
           path: coverage-backend
 
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-
-    steps:
-      - name: Deploy Pages artifact
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
