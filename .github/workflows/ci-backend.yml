@@ -1,28 +1,23 @@
 name: Backend CI + Deploy coverage to Pages
 
-# 1) Permissions nécessaires pour deploy-pages et configure-pages
-permissions:
-  contents: read         # on ne push pas sur main
-  pages: write           # publication GitHub Pages
-  id-token: write        # nécessaire pour OIDC (actions/deploy-pages@v4)
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
-  # ─────────────── Build & Test ───────────────
-  build-test:
-    name: Build & Test
+  build:
+    name: Build & Package Coverage
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./back
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,34 +32,27 @@ jobs:
       - name: Run tests & generate Jacoco report
         run: mvn clean verify jacoco:report
 
-  # ───────────── Prepare & Deploy Pages ─────────────
-  publish-coverage:
-    name: Prepare & Deploy Coverage Report
-    needs: build-test
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages    # correspond à votre environn. Pages
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Prepare coverage directory
+      - name: Prepare coverage-backend dir
         run: |
           rm -rf coverage-backend
           mkdir coverage-backend
-          cp -R back/target/site/jacoco/* coverage-backend/
+          cp -R target/site/jacoco/* coverage-backend/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: coverage-backend
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+
+    steps:
+      - name: Deploy artifact to Pages
         uses: actions/deploy-pages@v4
