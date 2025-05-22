@@ -60,7 +60,7 @@ jobs:
         run: |
           mvn clean install sonar:sonar -X \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=MickC0 \
+            -Dsonar.organization=mickc0 \
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dproject.settings=../sonar-backend.properties
@@ -70,7 +70,7 @@ jobs:
         run: |
           mvn clean install sonar:sonar -X \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=MickC0 \
+            -Dsonar.organization=mickc0 \
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dproject.settings=../sonar-backend.properties \
