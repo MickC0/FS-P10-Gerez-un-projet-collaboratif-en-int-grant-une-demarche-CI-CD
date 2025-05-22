@@ -33,20 +33,21 @@ jobs:
       - name: Run tests & generate Jacoco report
         run: mvn -f back/pom.xml clean verify jacoco:report
 
-      - name: Setup Pages
+      - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare Pages content
+      - name: Prepare static site for Pages
         run: |
-          # on nettoie le dossier _site
+          # On bosse dans le dossier _site, c'est notre racine de site
           rm -rf _site
-          # on recrée le sous-dossier où on veut déployer notre rapport
           mkdir -p _site/coverage-backend
-          # on copie le HTML généré par Jacoco
+          # On copie tout le HTML qui vient de Jacoco
           cp -R back/target/site/jacoco/* _site/coverage-backend/
+          # On désactive Jekyll pour servir le statique
+          touch _site/.nojekyll
 
-      - name: Upload artifact
+      - name: Upload artifact to Pages
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
