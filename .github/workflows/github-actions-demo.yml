@@ -44,14 +44,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install dependencies
+        run: npm ci
       - name: Install Chrome browser
-        id: install_chrome
+        id: install-chrome
         uses: browser-actions/setup-chrome@v1
-        with:
-          install-dependencies: true
+
       - name: Run tests with coverage
         env:
-          CHROME_BIN: ${{ steps.install_chrome.outputs.chrome-path }}
+          CHROME_BIN: ${{ steps.install-chrome.outputs.chrome-path }}
         run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
       - name: Upload frontend coverage report artifact
         uses: actions/upload-artifact@v4
