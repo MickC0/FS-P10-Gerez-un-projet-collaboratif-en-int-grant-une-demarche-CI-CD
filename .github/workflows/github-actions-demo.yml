@@ -50,9 +50,9 @@ jobs:
         with:
           install-dependencies: true
       - name: Run tests with coverage
-          env:
-            CHROME_BIN: ${{ steps.install_chrome.outputs.chrome-path }}
-          run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
+        env:
+          CHROME_BIN: ${{ steps.install_chrome.outputs.chrome-path }}
+        run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
       - name: Upload frontend coverage report artifact
         uses: actions/upload-artifact@v4
         with:
