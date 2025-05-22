@@ -15,15 +15,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build, Package & Deploy
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build & Prepare Pages Site
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 11
@@ -36,20 +33,33 @@ jobs:
       - name: Run tests & generate Jacoco report
         run: mvn -f back/pom.xml clean verify jacoco:report
 
-      - name: Prepare coverage-backend directory
-        run: |
-          rm -rf coverage-backend
-          mkdir coverage-backend
-          cp -R back/target/site/jacoco/* coverage-backend/
-
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
+      - name: Prepare Pages content
+        run: |
+          # on nettoie le dossier _site
+          rm -rf _site
+          # on recrée le sous-dossier où on veut déployer notre rapport
+          mkdir -p _site/coverage-backend
+          # on copie le HTML généré par Jacoco
+          cp -R back/target/site/jacoco/* _site/coverage-backend/
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: coverage-backend
+          path: _site
 
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
