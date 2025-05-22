@@ -55,3 +55,5 @@ jobs:
     steps:
       - name: Deploy Pages artifact
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: coverage-backend
