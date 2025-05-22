@@ -17,6 +17,7 @@ jobs:
     defaults:
       run:
         working-directory: ./back
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,8 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+
     steps:
       - name: Deploy Pages artifact
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: coverage-backend
