@@ -11,16 +11,19 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build & Prepare Pages Site
+  deploy:
+    name: Build, Package & Deploy Coverage
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 11
@@ -33,34 +36,22 @@ jobs:
       - name: Run tests & generate Jacoco report
         run: mvn -f back/pom.xml clean verify jacoco:report
 
+      - name: Prepare Pages site directory
+        run: |
+          rm -rf pages
+          mkdir -p pages/coverage-backend
+          cp -R back/target/site/jacoco/* pages/coverage-backend/
+          touch pages/.nojekyll
+
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Prepare static site for Pages
-        run: |
-          # On bosse dans le dossier _site, c'est notre racine de site
-          rm -rf _site
-          mkdir -p _site/coverage-backend
-          # On copie tout le HTML qui vient de Jacoco
-          cp -R back/target/site/jacoco/* _site/coverage-backend/
-          # On désactive Jekyll pour servir le statique
-          touch _site/.nojekyll
-
-      - name: Upload artifact to Pages
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: pages
 
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
