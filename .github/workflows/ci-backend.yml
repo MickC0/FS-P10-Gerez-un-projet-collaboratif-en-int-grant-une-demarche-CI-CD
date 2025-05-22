@@ -16,11 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        # Par défaut on reste dans ./back pour lancer mvn
         working-directory: ./back
-
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 11
@@ -41,8 +39,12 @@ jobs:
           cp -R back/target/site/jacoco/* coverage-backend/
 
       - name: Configure Pages
-        uses: a
+        uses: actions/configure-pages@v5
 
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: coverage-backend
 
   deploy:
     name: Deploy to GitHub Pages
@@ -50,7 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-
     steps:
-      - name: Deploy artifact to Pages
+      - name: Deploy Pages artifact
         uses: actions/deploy-pages@v4
