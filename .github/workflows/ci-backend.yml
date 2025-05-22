@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
-          path: ./back/target/site/jacoco
+          path: back/target/site/jacoco
           retention-days: 7
 
       - name: Publish backend coverage report to Github Pages
@@ -60,5 +60,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./back/target/site/jacoco
-          destination_dir: ./coverage-backend
+          publish_dir: back/target/site/jacoco
+          destination_dir: coverage-backend
