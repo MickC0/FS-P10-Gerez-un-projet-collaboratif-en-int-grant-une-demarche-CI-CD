@@ -1,26 +1,20 @@
-name: Deploy backend coverage to Pages
+name: Backend CI + Publish coverage to gh-pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build, Package & Deploy Coverage
+  build-and-publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: ./back
 
     steps:
       - name: Checkout code
@@ -34,24 +28,22 @@ jobs:
           cache: maven
 
       - name: Run tests & generate Jacoco report
-        run: mvn -f back/pom.xml clean verify jacoco:report
+        run: mvn clean verify jacoco:report
 
-      - name: Prepare Pages site directory
+      - name: Prepare directory for Pages
+        working-directory: ${{ github.workspace }}
         run: |
-          rm -rf pages
-          mkdir -p pages/coverage-backend
-          cp -R back/target/site/jacoco/* pages/coverage-backend/
-          touch pages/.nojekyll
+          rm -rf _site
+          mkdir -p _site/coverage-backend
+          cp -R back/target/site/jacoco/* _site/coverage-backend/
+          # désactive Jekyll sur la branche gh-pages
+          touch _site/.nojekyll
 
-      - name: Configure Pages
-        id: pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: pages
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          publish_branch: gh-pages
+          destination_dir: /
+          allow_empty_commit: true
