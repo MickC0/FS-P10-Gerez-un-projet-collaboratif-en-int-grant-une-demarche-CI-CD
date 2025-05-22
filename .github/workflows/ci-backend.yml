@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
+        # Par défaut on reste dans ./back pour lancer mvn
         working-directory: ./back
 
     steps:
@@ -32,19 +33,16 @@ jobs:
       - name: Run tests & generate Jacoco report
         run: mvn clean verify jacoco:report
 
-      - name: Prepare coverage-backend dir
+      - name: Prepare coverage directory at repo root
+        working-directory: ${{ github.workspace }}
         run: |
           rm -rf coverage-backend
           mkdir coverage-backend
-          cp -R target/site/jacoco/* coverage-backend/
+          cp -R back/target/site/jacoco/* coverage-backend/
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: a
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: coverage-backend
 
   deploy:
     name: Deploy to GitHub Pages
