@@ -28,9 +28,17 @@ module.exports = function (config) {
       dir: require('path').join(__dirname, './coverage/bobapp'),
       subdir: '.',
       reporters: [
-        { type: 'html' },
+        { type: 'lcov' },
         { type: 'text-summary' }
-      ]
+      ],
+      check: {
+        global: {
+          statements: 75,
+          branches: 75,
+          functions: 50,
+          lines: 75,
+        },
+      },
     },
     reporters: ['progress', 'kjhtml'],
     port: 9876,
