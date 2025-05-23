@@ -36,11 +36,13 @@ jobs:
         run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
 
-      - name: Verify front coverage report exists
+      - name: Verify and prepare coverage for Pages
+        working-directory: ${{ github.workspace }}
         run: |
           set -e
           echo "Looking for coverage directory under front/coverage…"
-          BASE=front/coverage
+          BASE="front/coverage"
+
           if [ -f "$BASE/index.html" ]; then
             COV_DIR="$BASE"
           else
@@ -52,12 +54,13 @@ jobs:
               exit 1
             fi
           fi
-          
+
           echo "Found coverage in $COV_DIR, preparing _site/coverage-frontend…"
           rm -rf _site
           mkdir -p _site/coverage-frontend
           cp -R "$COV_DIR"/* _site/coverage-frontend/
           touch _site/.nojekyll
+
 
       - name: Deploy coverage to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
