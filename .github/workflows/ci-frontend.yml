@@ -40,15 +40,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           set -e
-          echo "Looking for coverage directory under front/coverage/bobapp…"
           BASE="front/coverage/bobapp"
-          if [ ! -d "$BASE" ] || [ ! -f "$BASE/index.html" ]; then
+          if [ ! -f "$BASE/index.html" ]; then
             echo "Error: No index.html found in $BASE" >&2
             exit 1
           fi
 
-          echo "Found coverage in $BASE – preparing _site/coverage-frontend…"
-          rm -rf _site
           mkdir -p _site/coverage-frontend
           cp -R "$BASE"/* _site/coverage-frontend/
           touch _site/.nojekyll
