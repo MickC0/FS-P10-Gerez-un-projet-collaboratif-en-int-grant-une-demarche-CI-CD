@@ -38,25 +38,25 @@ jobs:
 
       - name: Verify front coverage report exists
         run: |
-          if [ ! -d coverage ]; then
-            echo "Error: front/coverage directory not found."
-            exit 1
+          set -e
+          echo "Looking for coverage directory under front/coverage…"
+          BASE=front/coverage
+          if [ -f "$BASE/index.html" ]; then
+            COV_DIR="$BASE"
+          else
+            SUB=$(find "$BASE" -maxdepth 1 -mindepth 1 -type d | head -n1)
+            if [ -n "$SUB" ] && [ -f "$SUB/index.html" ]; then
+              COV_DIR="$SUB"
+            else
+              echo "Error: Aucun index.html dans front/coverage ni sous-dossier." >&2
+              exit 1
+            fi
           fi
-          # on récupère le premier dossier à l'intérieur de coverage
-          SUB=$(find coverage -maxdepth 1 -mindepth 1 -type d | head -n1)
-          if [ -z "$SUB" ] || [ ! -f "$SUB/index.html" ]; then
-            echo "Error: No index.html found in coverage subfolder."
-            exit 1
-          fi
-        shell: bash
-
-      - name: Prepare directory for Pages
-        working-directory: ${{ github.workspace }}
-        run: |
+          
+          echo "Found coverage in $COV_DIR, preparing _site/coverage-frontend…"
           rm -rf _site
           mkdir -p _site/coverage-frontend
-          COV_DIR=$(find front/coverage -maxdepth 1 -mindepth 1 -type d | head -n1)
-          cp -R front/coverage/* _site/coverage-frontend/
+          cp -R "$COV_DIR"/* _site/coverage-frontend/
           touch _site/.nojekyll
 
       - name: Deploy coverage to gh-pages branch
