@@ -97,7 +97,7 @@ jobs:
         with:
           scanMetadataReportFile: back/target/sonar/report-task.txt
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
 
