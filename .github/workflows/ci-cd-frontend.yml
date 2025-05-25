@@ -50,15 +50,14 @@ jobs:
 
       - name: Verify coverage exists
         run: |
-          # on se trouve déjà dans ./front
           if [ ! -d coverage ] || [ -z "$(find coverage -maxdepth 1 -mindepth 1 -type d)" ]; then
             echo "coverage folder missing"
             exit 1
           fi
 
       - name: Prepare Pages directory
+        working-directory: ${{ github.workspace }}
         run: |
-          # on revient à la racine pour copier
           rm -rf _site
           mkdir -p _site/coverage-frontend
           cp -R front/coverage/* _site/coverage-frontend/
