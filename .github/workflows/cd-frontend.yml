@@ -1,8 +1,8 @@
 name: Frontend CD – Build & Push Docker Image
 
 concurrency:
-  group: ${{ github.ref }}.frontend
-  cancel-in-progress: true
+  group: ${{ github.ref }}.frontend-cd
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -14,7 +14,6 @@ on:
 
 jobs:
   docker-build-and-push:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
 
