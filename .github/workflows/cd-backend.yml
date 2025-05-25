@@ -64,6 +64,7 @@ jobs:
           context: ./back
           file: ./back/Dockerfile
           push: true
+          load: true
           tags: ${{ steps.backend-meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
