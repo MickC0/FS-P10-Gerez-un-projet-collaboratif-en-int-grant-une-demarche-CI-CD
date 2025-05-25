@@ -86,27 +86,14 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=mickc0
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
-            -Dproject.settings=../sonar-frontend.properties
+            -Dproject.settings=sonar-frontend.properties
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      - name: SonarQube Scan on pull request
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: SonarSource/sonarqube-scan-action@v4
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.organization=mickc0
-            -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
-            -Dproject.settings=../sonar-frontend.properties
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
 
       - name: Quality Gate Check
         uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
