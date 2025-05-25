@@ -2,9 +2,9 @@ name: Frontend CI + Publish coverage to gh-pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -15,9 +15,6 @@ jobs:
   tests-and-publish:
     name: Run tests, generate coverage & publish to Pages
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./front
 
     steps:
       - name: Checkout code
@@ -27,6 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install Chrome
         id: install-chrome
@@ -40,16 +38,19 @@ jobs:
           npm ci
           npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
-      - name: Debug coverage output
+
+      - name: Debug coverage output (in front/)
+        working-directory: front
         run: |
-          echo "🔍 Listing front directory:"
-          find front -maxdepth 3 | sed 's/^/   /'
+          echo "Listing coverage dir under front/coverage"
+          find coverage -maxdepth 2 | sed 's/^/   /'
 
       - name: Prepare coverage for Pages
         run: |
-          COVER_DIR=front/coverage/bobapp
-          if [ ! -d "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
-            echo "Report not found at $COVER_DIR" >&2
+          COVER_BASE=front/coverage
+          COVER_DIR=$(find "$COVER_BASE" -maxdepth 1 -mindepth 1 -type d | head -n1)
+          if [ -z "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
+            echo "Aucun rapport de couverture trouvé dans $COVER_BASE" >&2
             exit 1
           fi
           echo "Found coverage in $COVER_DIR"
@@ -58,7 +59,6 @@ jobs:
           mkdir -p _site/coverage-frontend
           cp -R "$COVER_DIR"/* _site/coverage-frontend/
           touch _site/.nojekyll
-
 
       - name: Deploy coverage to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
