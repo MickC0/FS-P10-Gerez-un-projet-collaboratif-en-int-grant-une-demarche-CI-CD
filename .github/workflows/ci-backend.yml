@@ -11,10 +11,10 @@ permissions:
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
     types: [opened, synchronize, reopened]
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   backend-tests-analysis:
@@ -48,20 +48,21 @@ jobs:
           fi
         shell: bash
 
-      - name: Upload backend coverage report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: ./back/target/site/jacoco
-          retention-days: 7
+      - name: Prepare directory for Pages
+        working-directory: ${{ github.workspace }}
+        run: |
+          rm -rf _site
+          mkdir -p _site/coverage-backend
+          cp -R back/target/site/jacoco/* _site/coverage-backend/
+          touch _site/.nojekyll
 
-      - name: Publish backend coverage report to Github Pages
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+      - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./back/target/site/jacoco
-          destination_dir: ./coverage-backend
+          publish_dir: _site
+          publish_branch: gh-pages
+          allow_empty_commit: true
 
       - name: Upload coverage reports to Codecov
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
