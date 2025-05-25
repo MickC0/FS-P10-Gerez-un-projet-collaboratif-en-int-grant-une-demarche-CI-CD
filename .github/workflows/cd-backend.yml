@@ -6,8 +6,6 @@ on:
       - "Backend CI + Publish coverage to gh-pages"
     types:
       - completed
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +16,6 @@ jobs:
   docker-build-and-push:
     name: Build & Push Backend Image
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     defaults:
       run:
         working-directory: ./back
@@ -63,8 +60,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: back
-          file: back/Dockerfile
+          context: ./back
+          file: ./back/Dockerfile
           push: true
           tags: ${{ steps.backend-metadata-extraction.outputs.tags }}
           labels: ${{ steps.backend-metadata-extraction.outputs.labels }}

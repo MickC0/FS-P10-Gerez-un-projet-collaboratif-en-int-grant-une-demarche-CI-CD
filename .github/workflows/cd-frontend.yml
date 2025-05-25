@@ -6,8 +6,6 @@ on:
       - "Frontend CI + Publish coverage to gh-pages"
     types:
       - completed
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
@@ -18,7 +16,7 @@ jobs:
   docker-build-and-push:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
+
     defaults:
       run:
         working-directory: ./front
@@ -64,8 +62,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: front
-          file: front/Dockerfile
+          context: ./front
+          file: ./front/Dockerfile
           push: true
           tags: ${{ steps.frontend-metadata-extraction.outputs.tags }}
           labels: ${{ steps.frontend-metadata-extraction.outputs.labels }}
