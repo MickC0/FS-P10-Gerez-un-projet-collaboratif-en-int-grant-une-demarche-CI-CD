@@ -1,11 +1,10 @@
 name: Backend CD – Build & Push Docker Image
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
   workflow_run:
-    workflows: ["Backend CI + Publish coverage to gh-pages"]
+    workflows:
+      - "Backend CI + Publish coverage to gh-pages"
     types:
       - completed
 
