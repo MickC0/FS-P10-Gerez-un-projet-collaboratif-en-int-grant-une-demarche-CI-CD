@@ -48,21 +48,20 @@ jobs:
           fi
         shell: bash
 
-      - name: Prepare directory for Pages
-        working-directory: ${{ github.workspace }}
-        run: |
-          rm -rf _site
-          mkdir -p _site/coverage-backend
-          cp -R ./back/target/site/jacoco/* _site/coverage-backend/
-          touch _site/.nojekyll
+      - name: Upload backend coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: ./back/target/site/jacoco
+          retention-days: 7
 
-      - name: Deploy to gh-pages branch
+      - name: Publish backend coverage report to Github Pages
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _site
-          publish_branch: gh-pages
-          allow_empty_commit: true
+          publish_dir: ./back/target/site/jacoco
+          destination_dir: ./coverage-backend
 
       - name: Upload coverage reports to Codecov
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
@@ -91,7 +90,7 @@ jobs:
             -Dsonar.organization=mickc0 \
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dproject.settings=./sonar-backend.properties \
+            -Dproject.settings=../sonar-backend.properties \
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
             -Dsonar.pullrequest.branch=${{ github.head_ref }} \
             -Dsonar.pullrequest.base=${{ github.base_ref }}
