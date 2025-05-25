@@ -2,10 +2,8 @@ name: Frontend CD – Build & Push Docker Image
 
 on:
   workflow_run:
-    workflows:
-      - "Frontend CI + Publish coverage to gh-pages"
-    types:
-      - completed
+    workflows: [Frontend CI + Publish coverage to gh-pages]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
