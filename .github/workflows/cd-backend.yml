@@ -2,8 +2,12 @@ name: Backend CD – Build & Push Docker Image
 
 on:
   workflow_run:
-    workflows: [Backend CI + Publish coverage to gh-pages]
-    types: [completed]
+    workflows:
+      - "Backend CI + Publish coverage to gh-pages"
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -59,8 +63,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./back
-          file: ./back/Dockerfile
+          context: back
+          file: back/Dockerfile
           push: true
           tags: ${{ steps.backend-metadata-extraction.outputs.tags }}
           labels: ${{ steps.backend-metadata-extraction.outputs.labels }}

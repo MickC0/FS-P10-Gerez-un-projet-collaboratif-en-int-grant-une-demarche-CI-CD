@@ -2,8 +2,12 @@ name: Frontend CD – Build & Push Docker Image
 
 on:
   workflow_run:
-    workflows: [Frontend CI + Publish coverage to gh-pages]
-    types: [completed]
+    workflows:
+      - "Frontend CI + Publish coverage to gh-pages"
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -22,6 +26,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies and build Angular project in prod
+        working-directory: front
+        run: |
+          npm ci
+          npm run build --prod
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -49,8 +64,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./front
-          file: ./front/Dockerfile
+          context: front
+          file: front/Dockerfile
           push: true
           tags: ${{ steps.frontend-metadata-extraction.outputs.tags }}
           labels: ${{ steps.frontend-metadata-extraction.outputs.labels }}
