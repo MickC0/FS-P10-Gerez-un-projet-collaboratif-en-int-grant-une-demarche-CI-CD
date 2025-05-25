@@ -15,16 +15,20 @@ jobs:
   tests-and-publish:
     name: Run tests, generate coverage & publish to Pages
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./front
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: front/package-lock.json
 
       - name: Install Chrome
         id: install-chrome
@@ -45,19 +49,18 @@ jobs:
           echo "Listing coverage dir under front/coverage"
           find coverage -maxdepth 2 | sed 's/^/   /'
 
-      - name: Prepare coverage for Pages
+      - name: Locate and prepare coverage for Pages
+        working-directory: ${{ github.workspace }}
         run: |
-          COVER_BASE=front/coverage
-          COVER_DIR=$(find "$COVER_BASE" -maxdepth 1 -mindepth 1 -type d | head -n1)
-          if [ -z "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
-            echo "Aucun rapport de couverture trouvé dans $COVER_BASE" >&2
+          set -e
+          BASE="front/coverage/bobapp"
+          if [ ! -f "$BASE/index.html" ]; then
+            echo "Error: No index.html found in $BASE" >&2
             exit 1
           fi
-          echo "Found coverage in $COVER_DIR"
 
-          rm -rf _site
           mkdir -p _site/coverage-frontend
-          cp -R "$COVER_DIR"/* _site/coverage-frontend/
+          cp -R "$BASE"/* _site/coverage-frontend/
           touch _site/.nojekyll
 
       - name: Deploy coverage to gh-pages branch
@@ -66,7 +69,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: _site
           publish_branch: gh-pages
-          allow_empty_commit: true
+          allow_empty_commit: truee
 
       - name: Upload coverage to Codecov
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
