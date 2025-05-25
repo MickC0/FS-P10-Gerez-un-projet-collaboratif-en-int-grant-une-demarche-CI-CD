@@ -40,21 +40,25 @@ jobs:
           npm ci
           npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
+      - name: Debug coverage output
+        run: |
+          echo "🔍 Listing front directory:"
+          find front -maxdepth 3 | sed 's/^/   /'
 
       - name: Prepare coverage for Pages
         run: |
-          COVER_BASE=front/coverage
-          COVER_DIR=$(find "$COVER_BASE" -maxdepth 1 -mindepth 1 -type d | head -n1)
-          if [ -z "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
-            echo "Aucun rapport de couverture trouvé dans $COVER_BASE" >&2
+          COVER_DIR=front/coverage/bobapp
+          if [ ! -d "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
+            echo "Report not found at $COVER_DIR" >&2
             exit 1
           fi
-          echo "Coverage found in $COVER_DIR"
+          echo "Found coverage in $COVER_DIR"
 
           rm -rf _site
           mkdir -p _site/coverage-frontend
           cp -R "$COVER_DIR"/* _site/coverage-frontend/
           touch _site/.nojekyll
+
 
       - name: Deploy coverage to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
