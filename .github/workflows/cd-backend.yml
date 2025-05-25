@@ -1,4 +1,5 @@
 name: Backend CD – Build & Push Docker Image
+
 on:
   push:
     branches: [ main ]
@@ -7,6 +8,10 @@ on:
     workflows: ["Backend CI + Publish coverage to gh-pages"]
     types:
       - completed
+
+concurrency:
+  group: backend-cd-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   docker-build-and-push:
