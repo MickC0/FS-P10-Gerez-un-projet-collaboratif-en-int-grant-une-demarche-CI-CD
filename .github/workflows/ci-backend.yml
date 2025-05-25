@@ -34,6 +34,11 @@ jobs:
           java-version: '17'
           cache: maven
 
+      - name: Run tests & generate Jacoco report
+        id: run-backend-tests
+        run: mvn clean verify jacoco:report
+        continue-on-error: true
+
       - name: Verify coverage report existence and stop if missing
         run: |
           if [ ! -f "./target/site/jacoco/jacoco.xml" ]; then          
