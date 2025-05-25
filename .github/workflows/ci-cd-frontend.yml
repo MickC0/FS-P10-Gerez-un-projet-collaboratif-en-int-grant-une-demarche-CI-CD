@@ -82,13 +82,13 @@ jobs:
 
       - name: SonarCloud Scan
         if: ${{ github.event_name == 'push' }}
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=mickc0 \
-            -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend \
-            -Dproject.settings=sonar-frontend.properties \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: >
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.organization=mickc0
+            -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
+            -Dproject.settings=sonar-frontend.properties
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -104,7 +104,7 @@ jobs:
       - name: Fail if CI requirements not met
         if: ${{ steps.run-tests.outcome == 'failure' || steps.quality-gate.outcome == 'failure' }}
         run: |
-          echo "🚨 Frontend CI failed (tests or quality gate)."
+          echo "Frontend CI failed (tests or quality gate)."
           exit 1
 
   cd-docker:
