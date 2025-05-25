@@ -33,12 +33,12 @@ jobs:
         uses: browser-actions/setup-chrome@v1
 
       - name: Run front-end tests & generate coverage
-        run: |
-          cd front
-          npm ci
-          npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
+        working-directory: front
         env:
           CHROME_BIN: ${{ steps.install-chrome.outputs.chrome-path }}
+        run: |
+          npm ci
+          npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
 
       - name: Prepare coverage for Pages
