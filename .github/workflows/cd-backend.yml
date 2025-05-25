@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Backend CI + Publish coverage to gh-pages"]
     types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

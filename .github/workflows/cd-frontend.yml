@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Frontend CI + Publish coverage to gh-pages"]
     types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +37,7 @@ jobs:
       - name: Install & build Angular
         run: |
           npm ci
-          npm run build --prod
+          npm run build -- --configuration=production
 
       - name: Docker Hub login
         uses: docker/login-action@v3
