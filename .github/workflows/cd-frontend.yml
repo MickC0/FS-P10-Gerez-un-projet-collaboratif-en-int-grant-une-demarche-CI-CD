@@ -1,34 +1,29 @@
 name: Frontend CD – Build & Push Docker Image
 
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Frontend CI + Publish coverage to gh-pages"]
+    types: [completed]
+
 concurrency:
   group: ${{ github.ref }}.frontend-cd
   cancel-in-progress: false
 
-on:
-
-  workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Frontend CI + Publish coverage to gh-pages"
-    types:
-      - completed
-
-
 jobs:
   docker-build-and-push:
-    name: Build & Push Frontend Image
-    runs-on: ubuntu-latest
-    if: |
+    if: >
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main'
+        github.event.workflow_run.event == 'push'
       )
-
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./front
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,13 +31,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
+          cache: npm
 
-      - name: Install dependencies and build Angular project in prod
-        working-directory: front
+      - name: Build Angular (prod)
         run: |
           npm ci
-          npm run build -- --prod
+          npm run build -- --configuration=production
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -51,7 +46,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Extract Docker metadata
-        id: frontend-metadata-extraction
+        id: frontend-metadata
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/bobapp-frontend
@@ -60,9 +55,6 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=sha,format=long
-          labels: |
-            org.opencontainers.image.source=${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -73,7 +65,6 @@ jobs:
           context: ./front
           file: ./front/Dockerfile
           push: true
-          tags: ${{ steps.frontend-metadata-extraction.outputs.tags }}
-          labels: ${{ steps.frontend-metadata-extraction.outputs.labels }}
+          tags: ${{ steps.frontend-metadata.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

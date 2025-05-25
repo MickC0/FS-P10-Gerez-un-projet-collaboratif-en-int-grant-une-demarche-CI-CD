@@ -1,28 +1,25 @@
 name: Backend CD – Build & Push Docker Image
 
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Backend CI + Publish coverage to gh-pages"]
+    types: [completed]
+
 concurrency:
   group: ${{ github.ref }}.backend-cd
   cancel-in-progress: false
 
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Backend CI + Publish coverage to gh-pages"
-    types:
-      - completed
-
 jobs:
   docker-build-and-push:
-    name: Build & Push Backend Image
-    runs-on: ubuntu-latest
-    if: |
+    if: >
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main'
+        github.event.workflow_run.event == 'push'
       )
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./back
@@ -48,7 +45,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Extract Docker metadata
-        id: backend-metadata-extraction
+        id: backend-metadata
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/bobapp-backend
@@ -57,9 +54,6 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=sha,format=long
-          labels: |
-            org.opencontainers.image.revision={{ git_sha }}
-            org.opencontainers.image.source={{ github.repositoryUrl }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,7 +64,6 @@ jobs:
           context: ./back
           file: ./back/Dockerfile
           push: true
-          tags: ${{ steps.backend-metadata-extraction.outputs.tags }}
-          labels: ${{ steps.backend-metadata-extraction.outputs.labels }}
+          tags: ${{ steps.backend-metadata.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
