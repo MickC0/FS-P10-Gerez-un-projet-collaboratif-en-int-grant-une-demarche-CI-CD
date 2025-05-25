@@ -16,14 +16,7 @@ jobs:
   docker-build-and-push:
     name: Build & Push Frontend Image
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push'
-      )
-
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     defaults:
       run:
         working-directory: ./front
@@ -39,7 +32,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Extract Docker metadata
-        id: meta
+        id: frontend-metadata-extraction
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/bobapp-frontend
@@ -61,7 +54,7 @@ jobs:
           context: ./front
           file: ./front/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.frontend-metadata-extraction.outputs.tags }}
+          labels: ${{ steps.frontend-metadata-extraction.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
