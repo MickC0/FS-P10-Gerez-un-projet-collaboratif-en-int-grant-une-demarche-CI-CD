@@ -1,22 +1,24 @@
 name: Backend CI + Publish coverage to gh-pages
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
 concurrency:
-  group: ${{ github.ref }}.backend-ci
+  group: ${{ github.ref }}.backend
   cancel-in-progress: true
 
 permissions:
   contents: write
   pages: write
 
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+
 jobs:
-  build-and-publish:
+  backend-tests-analysis:
+    name: Run backend tests and quality analysis
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,6 +69,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend
 
       - name: SonarQube Scan for push to main
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
@@ -78,7 +81,7 @@ jobs:
             -Dsonar.organization=mickc0 \
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dproject.settings=../sonar-backend.properties
+            -Dproject.settings=./sonar-backend.properties
 
       - name: SonarQube Scan on pull request
         if: ${{ github.event_name == 'pull_request' }}
@@ -88,7 +91,7 @@ jobs:
             -Dsonar.organization=mickc0 \
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dproject.settings=../sonar-backend.properties \
+            -Dproject.settings=./sonar-backend.properties \
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
             -Dsonar.pullrequest.branch=${{ github.head_ref }} \
             -Dsonar.pullrequest.base=${{ github.base_ref }}

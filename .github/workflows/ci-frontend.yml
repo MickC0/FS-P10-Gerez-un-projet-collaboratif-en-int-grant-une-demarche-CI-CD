@@ -1,23 +1,23 @@
 name: Frontend CI + Publish coverage to gh-pages
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
 concurrency:
-  group: ${{ github.ref }}.frontend-ci
+  group: ${{ github.ref }}.frontend
   cancel-in-progress: true
 
 permissions:
   contents: write
   pages: write
 
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
 jobs:
-  build-and-publish-frontend:
-    name: Build & Publish Frontend Coverage
+  caca:
+    name: Run frontend tests and quality analysis
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -37,8 +37,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Chrome browser
+        id: install-chrome
+        uses: browser-actions/setup-chrome@v1
+
       - name: Run front-end tests & generate coverage
         id: run-frontend-tests
+        env:
+          CHROME_BIN: ${{ steps.install-chrome.outputs.chrome-path }}
         run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
 
@@ -71,21 +77,34 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: frontend
 
-      - name: SonarCloud Scan
+      - name: SonarCloud Scan on push to main
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: SonarSource/sonarqube-scan-action@v4
         with:
           args: >
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=mickc0
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
-            -Dproject.settings=sonar-frontend.properties
+            -Dproject.settings=./sonar-frontend.properties
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: SonarQube Scan on pull request
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
+        with:
+          args: >
+            -Dsonar.organization=mickc0
+            -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
+            -Dproject.settings=./sonar-frontend.properties
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+
       - name: Quality Gate Check
         uses: sonarsource/sonarqube-quality-gate-action@master
-        with:
-          scanMetadataReportFile: .scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
