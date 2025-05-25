@@ -1,23 +1,23 @@
 name: Frontend CI + Publish coverage to gh-pages
 
-concurrency:
-  group: ${{ github.ref }}.frontend-ci
-  cancel-in-progress: true
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
   pages: write
 
-on:
-  workflow_dispatch:
-  pull_request:
-    branches: [ "main" ]
-  push:
-    branches: [ "main" ]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  frontend-tests-analysis:
-    name: Run frontend tests and quality analysis
+  tests-and-publish:
+    name: Run tests, coverage & publish to Pages
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,57 +27,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install deps & build
+        run: |
+          npm ci
+          npm run build -- --configuration=production
 
-      - name: Install Chrome browser
-        id: install-chrome
+      - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Run front-end tests & generate coverage
-        id: run-frontend-tests
+      - name: Run tests & generate coverage
         env:
           CHROME_BIN: ${{ steps.install-chrome.outputs.chrome-path }}
         run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
 
-
-      - name: Verify coverage report existence and stop if missing
+      - name: Verify coverage
         run: |
-          if [ ! -f "./coverage/bobapp/lcov.info" ]; then          
-           echo "Error: File 'coverage/bobapp/lcov.info' not found. Job failed."
-           exit 1
+          if [ ! -d "./coverage/bobapp" ]; then
+            echo "coverage/bobapp not found"
+            exit 1
           fi
-        shell: bash
 
-      - name: Upload frontend coverage report artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage
-          path: ./front/coverage/bobapp
-          retention-days: 7
+      - name: Prepare Pages directory
+        run: |
+          rm -rf _site
+          mkdir -p _site/coverage-frontend
+          cp -R coverage/bobapp/* _site/coverage-frontend/
+          touch _site/.nojekyll
 
-      - name: Publish frontend coverage report to Github Pages
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./front/coverage/bobapp/lcov-report
-          destination_dir: ./coverage-frontend
+          publish_dir: _site
+          publish_branch: gh-pages
+          allow_empty_commit: true
 
-      - name: Upload frontend coverage to Codecov
+      - name: Upload to Codecov
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: frontend
 
-      - name: SonarCloud Scan on push to main
+      - name: SonarCloud Scan
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: SonarSource/sonarqube-scan-action@v4
         with:
@@ -89,22 +88,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Quality Gate Check
+      - name: SonarCloud Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          scanMetadataReportFile: scannerwork/report-task.txt
+          scanMetadataReportFile: .scannerwork/report-task.txt
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
-      - name: Check requirements
-        if: ${{ steps.run-frontend-tests.outcome == 'failure' || steps.quality-gate.outcome == 'failure'}}
+      - name: Fail on unmet requirements
+        if: ${{ steps.run-frontend-tests.outcome == 'failure' || steps.quality-gate.outcome == 'failure' }}
         run: |
-          echo "Job failed :"
-          if [ "${{ steps.run-frontend-tests.outcome }}" == "failure" ]; then
-            echo "Coverage checks have not been met. See step 'Run tests and generate coverage report' output, and coverage report"
-          fi
-          if [ "${{ steps.quality-gate.outcome }}" == "failure" ]; then
-            echo "Code quality gate check failed. See step 'SonarQube Quality Gate Check'"
-          fi
+          echo "Frontend CI failed"
           exit 1

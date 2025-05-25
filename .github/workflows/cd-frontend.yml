@@ -1,14 +1,14 @@
 name: Frontend CD – Build & Push Docker Image
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["Frontend CI + Publish coverage to gh-pages"]
     types: [completed]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.ref }}.frontend-cd
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker-build-and-push:
@@ -16,9 +16,9 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push'
+        github.event.workflow_run.conclusion == 'success'
       )
+    name: Build & Push Frontend Docker Image
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,25 +28,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: npm
+          node-version: 22
 
-      - name: Build Angular (prod)
+      - name: Install & build Angular
         run: |
           npm ci
           npm run build -- --configuration=production
 
-      - name: Log in to Docker Hub
+      - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: frontend-metadata
+      - name: Extract image metadata
+        id: frontend-meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKER_HUB_USERNAME }}/bobapp-frontend
@@ -56,15 +55,15 @@ jobs:
             type=ref,event=tag
             type=sha,format=long
 
-      - name: Set up Docker Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
+      - name: Build & push image
         uses: docker/build-push-action@v6
         with:
           context: ./front
           file: ./front/Dockerfile
           push: true
-          tags: ${{ steps.frontend-metadata.outputs.tags }}
+          tags: ${{ steps.frontend-meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
