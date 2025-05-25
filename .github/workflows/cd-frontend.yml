@@ -20,9 +20,6 @@ jobs:
       )
     name: Build & Push Frontend Docker Image
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./front
 
     steps:
       - name: Checkout code

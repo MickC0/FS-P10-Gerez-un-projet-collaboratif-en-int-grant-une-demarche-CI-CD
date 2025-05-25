@@ -20,9 +20,6 @@ jobs:
       )
     name: Build & Push Backend Docker Image
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./back
 
     steps:
       - name: Checkout code

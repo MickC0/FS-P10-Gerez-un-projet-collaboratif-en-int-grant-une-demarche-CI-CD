@@ -19,9 +19,6 @@ jobs:
   tests-and-publish:
     name: Run tests, coverage & publish to Pages
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./front
 
     steps:
       - name: Checkout code
