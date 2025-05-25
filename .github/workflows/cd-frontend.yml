@@ -1,15 +1,15 @@
 name: Frontend CD – Build & Push Docker Image
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows:
       - "Frontend CI + Publish coverage to gh-pages"
     types:
       - completed
+  workflow_dispatch:
 
 concurrency:
-  group: frontend-cd-${{ github.ref }}
+  group: ${{ github.ref }}.frontend-cd
   cancel-in-progress: false
 
 jobs:

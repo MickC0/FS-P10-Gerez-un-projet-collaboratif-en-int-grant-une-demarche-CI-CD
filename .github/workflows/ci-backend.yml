@@ -3,7 +3,13 @@ name: Backend CI + Publish coverage to gh-pages
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}.backend-ci
+  cancel-in-progress: true
 
 permissions:
   contents: write

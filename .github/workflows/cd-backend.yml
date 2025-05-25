@@ -1,15 +1,15 @@
 name: Backend CD – Build & Push Docker Image
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows:
       - "Backend CI + Publish coverage to gh-pages"
     types:
       - completed
+  workflow_dispatch:
 
 concurrency:
-  group: backend-cd-${{ github.ref }}
+  group: ${{ github.ref }}.backend-cd
   cancel-in-progress: false
 
 jobs:
