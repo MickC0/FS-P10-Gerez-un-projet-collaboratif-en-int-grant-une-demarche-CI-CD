@@ -2,22 +2,18 @@ name: Frontend CI + Publish coverage to gh-pages
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: write
   pages: write
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   tests-and-publish:
-    name: Run tests, coverage & publish to Pages
+    name: Run tests, generate coverage & publish to Pages
     runs-on: ubuntu-latest
 
     steps:
@@ -28,31 +24,37 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install Chrome
+        id: install-chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Run tests & generate coverage
+      - name: Run front-end tests & generate coverage
+        run: |
+          cd front
+          npm ci
+          npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         env:
           CHROME_BIN: ${{ steps.install-chrome.outputs.chrome-path }}
-        run: npm test -- --code-coverage --watch=false --browsers=ChromeHeadlessCI
         continue-on-error: true
 
-      - name: Verify coverage
+      - name: Prepare coverage for Pages
         run: |
-          if [ ! -d "./coverage/bobapp" ]; then
-            echo "coverage/bobapp not found"
+          COVER_BASE=front/coverage
+          COVER_DIR=$(find "$COVER_BASE" -maxdepth 1 -mindepth 1 -type d | head -n1)
+          if [ -z "$COVER_DIR" ] || [ ! -f "$COVER_DIR/index.html" ]; then
+            echo "Aucun rapport de couverture trouvé dans $COVER_BASE" >&2
             exit 1
           fi
+          echo "Coverage found in $COVER_DIR"
 
-      - name: Prepare Pages directory
-        run: |
           rm -rf _site
           mkdir -p _site/coverage-frontend
-          cp -R coverage/bobapp/* _site/coverage-frontend/
+          cp -R "$COVER_DIR"/* _site/coverage-frontend/
           touch _site/.nojekyll
 
-      - name: Deploy to gh-pages
+      - name: Deploy coverage to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +62,7 @@ jobs:
           publish_branch: gh-pages
           allow_empty_commit: true
 
-      - name: Upload to Codecov
+      - name: Upload coverage to Codecov
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         uses: codecov/codecov-action@v5
         with:
