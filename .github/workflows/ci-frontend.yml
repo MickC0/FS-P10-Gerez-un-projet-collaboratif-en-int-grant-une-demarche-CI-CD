@@ -83,6 +83,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         with:
           args: >
+            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=mickc0
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
             -Dproject.settings=../sonar-frontend.properties
@@ -96,6 +97,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=mickc0
             -Dsonar.projectKey=MickC0_FS-P10-Gerez-un-projet-collaboratif-en-int-grant-une-demarche-CI-CD_frontend
             -Dproject.settings=../sonar-frontend.properties
