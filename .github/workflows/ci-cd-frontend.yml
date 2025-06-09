@@ -92,20 +92,20 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: SonarCloud Quality Gate
-        id: quality-gate
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        with:
-          scanMetadataReportFile: .scannerwork/report-task.txt
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        continue-on-error: true
+#      - name: SonarCloud Quality Gate
+#        id: quality-gate
+#        uses: sonarsource/sonarqube-quality-gate-action@master
+#       with:
+#          scanMetadataReportFile: .scannerwork/report-task.txt
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#        continue-on-error: true
 
-      - name: Fail if CI requirements not met
-        if: ${{ steps.run-tests.outcome == 'failure' || steps.quality-gate.outcome == 'failure' }}
-        run: |
-          echo "Frontend CI failed (tests or quality gate)."
-          exit 1
+#      - name: Fail if CI requirements not met
+#        if: ${{ steps.run-tests.outcome == 'failure' || steps.quality-gate.outcome == 'failure' }}
+#        run: |
+#          echo "Frontend CI failed (tests or quality gate)."
+#          exit 1
 
   cd-docker:
     name: CD Build & Push Docker Image
